@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>AXIOM SWARM AI // WEB DEMO</title>
+    <style>
+        body { margin: 0; background-color: #020104; color: #ff00ff; font-family: monospace; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+        #container { position: relative; border: 2px solid #ff00ff; box-shadow: 0 0 15px rgba(255, 0, 255, 0.2); }
+        .hud { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); border: 1px solid #ff00ff; padding: 10px; font-size: 12px; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div class="hud">
+            FPS: 60 (WEB OPTIMIZED)<br>
+            SWARM ARCHITECTURE: MULTI-AGENT HIVE<br>
+            CEREBROS INTELLIGENT: <span id="count">0</span>
+        </div>
+        <canvas id="canvas"></canvas>
+    </div>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 800; canvas.height = 600;
+
+        const boids = [];
+        const numBoids = 500;
+        document.getElementById('count').innerText = numBoids;
+
+        for(let i=0; i<numBoids; i++) {
+            boids.push({
+                x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 4, vy: (Math.random() - 0.5) * 4
+            });
+        }
+
+        function loop() {
+            ctx.fillStyle = '#010002'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            boids.forEach(boid => {
+                let closeDx = 0, closeDy = 0, xVelAvg = 0, yVelAvg = 0, neighbors = 0;
+
+                boids.forEach(other => {
+                    let dx = boid.x - other.x, dy = boid.y - other.y;
+                    let dist = Math.sqrt(dx*dx + dy*dy);
+                    if(dist < 35 && dist > 0) {
+                        if(dist < 8) { closeDx += dx; closeDy += dy; }
+                        xVelAvg += other.vx; yVelAvg += other.vy; neighbors++;
+                    }
+                });
+
+                if(neighbors > 0) {
+                    xVelAvg /= neighbors; yVelAvg /= neighbors;
+                    boid.vx += (xVelAvg - boid.vx) * 0.05; boid.vy += (yVelAvg - boid.vy) * 0.05;
+                }
+                boid.vx += closeDx * 0.15; boid.vy += closeDy * 0.15;
+                boid.vx += (canvas.width/2 - boid.x) * 0.0003; boid.vy += (canvas.height/2 - boid.y) * 0.0003;
+
+                let speed = Math.sqrt(boid.vx*boid.vx + boid.vy*boid.vy);
+                if(speed > 4) { boid.vx = (boid.vx/speed)*4; boid.vy = (boid.vy/speed)*4; }
+
+                boid.x += boid.vx; boid.y += boid.vy;
+
+                if(boid.x < 0) boid.x = canvas.width; if(boid.x > canvas.width) boid.x = 0;
+                if(boid.y < 0) boid.y = canvas.height; if(boid.y > canvas.height) boid.y = 0;
+
+                ctx.fillStyle = `rgb(${Math.abs(boid.vx)*50}, ${Math.abs(boid.vy)*50}, 255)`;
+                ctx.beginPath(); ctx.arc(boid.x, boid.y, 2, 0, Math.PI*2); ctx.fill();
+            });
+            requestAnimationFrame(loop);
+        }
+        loop();
+    </script>
+</body>
+</html>
